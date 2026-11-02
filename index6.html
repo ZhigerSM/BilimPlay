@@ -1,0 +1,480 @@
+
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Сиқырлы дөңгелек | BilimPlay</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 25px 15px;
+    font-family: Arial, sans-serif;
+    background: #f4f3ff;
+    color: #292943;
+    text-align: center;
+}
+
+.container {
+    max-width: 850px;
+    margin: auto;
+    background: white;
+    padding: 30px 20px;
+    border-radius: 24px;
+    box-shadow: 0 8px 30px #39308012;
+}
+
+h1 {
+    color: #5945c5;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #85859a;
+    margin-bottom: 25px;
+}
+
+.modes {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.mode {
+    padding: 12px 20px;
+    border: 2px solid #ded9fa;
+    background: white;
+    color: #5945c5;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.mode.active {
+    background: #5945c5;
+    color: white;
+}
+
+textarea {
+    width: 100%;
+    max-width: 500px;
+    height: 140px;
+    padding: 15px;
+    border: 2px solid #e3e0f4;
+    border-radius: 14px;
+    font-size: 16px;
+    resize: vertical;
+    outline: none;
+}
+
+textarea:focus {
+    border-color: #7967df;
+}
+
+.counter {
+    color: #888;
+    font-size: 13px;
+    margin: 8px 0 20px;
+}
+
+.wheel-area {
+    position: relative;
+    width: min(380px, 85vw);
+    margin: 30px auto;
+}
+
+.pointer {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 38px solid #292943;
+}
+
+#wheel {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 7px solid white;
+    box-shadow: 0 5px 25px #0002;
+    background: #ded9fa;
+    transition: transform 5s cubic-bezier(.12,.75,.18,1);
+    overflow: hidden;
+}
+
+.wheel-label {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.wheel-label span {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: clamp(11px, 2.5vw, 16px);
+    font-weight: bold;
+    color: #292943;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 35%;
+    padding: 2px;
+}
+
+#spin {
+    background: #5945c5;
+    color: white;
+    border: none;
+    padding: 16px 35px;
+    border-radius: 14px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 5px 15px #5945c544;
+}
+
+#spin:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+#result {
+    margin: 25px auto 0;
+    padding: 20px;
+    max-width: 500px;
+    background: #f0edff;
+    border-radius: 16px;
+    display: none;
+}
+
+#result h2 {
+    color: #5945c5;
+    margin: 5px 0;
+    overflow-wrap: anywhere;
+}
+
+.secondary {
+    margin-top: 15px;
+    padding: 11px 20px;
+    border: none;
+    background: #eeeaff;
+    color: #5945c5;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.back {
+    display: inline-block;
+    margin-top: 25px;
+    color: #777;
+    text-decoration: none;
+}
+
+@media(max-width: 500px) {
+    .container {
+        padding: 25px 14px;
+    }
+
+    h1 {
+        font-size: 25px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🎯 Сиқырлы дөңгелек</h1>
+    <p class="subtitle">Кездейсоқ таңдау — қызықты сабақ!</p>
+
+    <div class="modes">
+        <button class="mode active" data-mode="students">
+            👥 Оқушы таңдау
+        </button>
+
+        <button class="mode" data-mode="questions">
+            💡 Сұрақ таңдау
+        </button>
+    </div>
+
+    <textarea id="items"
+        placeholder="Әр жолға бір оқушының есімін жазыңыз..."></textarea>
+
+    <div class="counter" id="counter">
+        0 нұсқа енгізілді
+    </div>
+
+    <div class="wheel-area">
+        <div class="pointer"></div>
+
+        <div id="wheel">
+            <div class="wheel-label" id="labels"></div>
+        </div>
+    </div>
+
+    <button id="spin">🎲 Айналдыру</button>
+
+    <div id="result">
+        <p>🎉 Таңдалған нәтиже:</p>
+        <h2 id="resultText"></h2>
+    </div>
+
+    <a href="index.html" class="back">
+        ← Басты бетке қайту
+    </a>
+
+</div>
+
+<script>
+const textarea = document.getElementById("items");
+const wheel = document.getElementById("wheel");
+const labels = document.getElementById("labels");
+const counter = document.getElementById("counter");
+const spinButton = document.getElementById("spin");
+const result = document.getElementById("result");
+const resultText = document.getElementById("resultText");
+
+let mode = "students";
+let options = [];
+let rotation = 0;
+let spinning = false;
+let selectedIndex = -1;
+let resultShown = false;
+
+const colors = [
+    "#ffb4a2",
+    "#a0c4ff",
+    "#b9fbc0",
+    "#ffe69a",
+    "#d0bfff",
+    "#ffc6ff",
+    "#9bf6ff",
+    "#fdffb6",
+    "#caffbf",
+    "#ffadad",
+    "#bdb2ff",
+    "#ffd6a5"
+];
+
+// Дөңгелекті жаңарту
+function updateWheel() {
+
+    options = textarea.value
+        .split("\n")
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+
+    counter.textContent = options.length + " нұсқа енгізілді";
+
+    labels.innerHTML = "";
+
+    if (options.length === 0) {
+        wheel.style.background = "#ded9fa";
+        return;
+    }
+
+    const angle = 360 / options.length;
+
+    const gradients = options.map((item, index) => {
+        const start = index * angle;
+        const end = (index + 1) * angle;
+
+        return `${colors[index % colors.length]} ${start}deg ${end}deg`;
+    });
+
+    wheel.style.background =
+        `conic-gradient(${gradients.join(",")})`;
+
+    // Әр мәтінді өз секторының ортасына орналастыру
+    options.forEach((item, index) => {
+
+        const span = document.createElement("span");
+
+        span.textContent = item;
+
+        const middleAngle = (index + 0.5) * angle;
+        const radians = middleAngle * Math.PI / 180;
+
+        // Дөңгелектің ортасынан қашықтық
+        const radius = 31;
+
+        const x = 50 + radius * Math.sin(radians);
+        const y = 50 - radius * Math.cos(radians);
+
+        span.style.left = x + "%";
+        span.style.top = y + "%";
+
+        labels.appendChild(span);
+    });
+}
+
+// Айналдыру функциясы
+function spinWheel() {
+
+    if (spinning) return;
+
+    updateWheel();
+
+    if (options.length === 0) {
+        alert("Алдымен нұсқаларды енгізіңіз!");
+        return;
+    }
+
+    spinning = true;
+    resultShown = false;
+
+    spinButton.disabled = true;
+    spinButton.textContent = "Айналуда...";
+
+    result.style.display = "none";
+
+    selectedIndex = Math.floor(Math.random() * options.length);
+
+    const angle = 360 / options.length;
+
+    // Таңдалған сектордың орталық бұрышы
+    const selectedCenter = selectedIndex * angle + angle / 2;
+
+    // Жоғарғы көрсеткішке дәл келтіру
+    const targetAngle = (360 - selectedCenter) % 360;
+
+    const currentAngle = rotation % 360;
+
+    const adjustment =
+        (targetAngle - currentAngle + 360) % 360;
+
+    // Бірнеше толық айналым
+    rotation += 360 * 5 + adjustment;
+
+    wheel.style.transform = `rotate(${rotation}deg)`;
+
+    // Айналу аяқталғаннан кейін нәтиже көрсету
+    wheel.addEventListener("transitionend", function finish(event) {
+
+        if (event.propertyName !== "transform") return;
+
+        wheel.removeEventListener("transitionend", finish);
+
+        resultText.textContent = options[selectedIndex];
+
+        result.style.display = "block";
+
+        spinning = false;
+        resultShown = true;
+
+        spinButton.disabled = false;
+        spinButton.textContent = "Келесі айналым →";
+
+    });
+}
+
+// Батырма
+spinButton.addEventListener("click", () => {
+
+    if (spinning) return;
+
+    // Алдыңғы нәтиже көрсетіліп тұрса
+    if (resultShown) {
+
+        // Таңдалған нұсқаны ғана алып тастау
+        if (selectedIndex !== -1) {
+            options.splice(selectedIndex, 1);
+        }
+
+        textarea.value = options.join("\n");
+
+        selectedIndex = -1;
+        resultShown = false;
+
+        result.style.display = "none";
+
+        updateWheel();
+
+        // Барлық нұсқа аяқталса
+        if (options.length === 0) {
+
+            spinButton.disabled = true;
+            spinButton.textContent = "Ойын аяқталды!";
+
+            result.style.display = "block";
+            resultText.textContent = "Барлық нұсқа таңдалды! 🎉";
+
+            return;
+        }
+    }
+
+    spinWheel();
+
+});
+
+// Режим ауыстыру
+document.querySelectorAll(".mode").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        if (spinning) return;
+
+        document.querySelectorAll(".mode").forEach(item => {
+            item.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        mode = button.dataset.mode;
+
+        textarea.value = "";
+
+        textarea.placeholder = mode === "students"
+            ? "Әр жолға бір оқушының есімін жазыңыз..."
+            : "Әр жолға бір сұрақ немесе тапсырма жазыңыз...";
+
+        rotation = 0;
+        wheel.style.transform = "rotate(0deg)";
+
+        selectedIndex = -1;
+        resultShown = false;
+
+        result.style.display = "none";
+
+        spinButton.disabled = false;
+        spinButton.textContent = "🎲 Айналдыру";
+
+        updateWheel();
+
+    });
+
+});
+
+// Мәтін өзгергенде
+textarea.addEventListener("input", () => {
+
+    if (spinning || resultShown) return;
+
+    updateWheel();
+
+});
+
+// Бастапқы күй
+updateWheel();
+
+</script>
+
+</body>
+</html>

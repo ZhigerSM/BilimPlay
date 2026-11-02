@@ -1,0 +1,493 @@
+
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BilimPlay — Топқа бөлу</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f3ed;
+    color: #30394b;
+}
+
+header {
+    text-align: center;
+    padding: 25px 15px;
+}
+
+header h1 {
+    font-size: 34px;
+    margin: 0 0 8px;
+    color: #354b6b;
+}
+
+header p { color: #777; }
+
+.screen {
+    max-width: 1050px;
+    margin: 15px auto;
+    padding: 20px;
+}
+
+.panel {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px #0000000c;
+    max-width: 550px;
+    margin: 20px auto;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin: 20px 0 8px;
+}
+
+input, select {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    border: 2px solid #e4e7ed;
+    border-radius: 10px;
+    background: white;
+}
+
+button {
+    border: none;
+    background: #354b6b;
+    color: white;
+    padding: 14px 24px;
+    font-size: 17px;
+    border-radius: 11px;
+    cursor: pointer;
+}
+
+button:hover { opacity: .88; }
+
+.primary {
+    width: 100%;
+    margin-top: 25px;
+    background: #354b6b;
+}
+
+.secondary {
+    background: #e9edf3;
+    color: #354b6b;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.palette-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 15px;
+}
+
+.palette {
+    background: white;
+    border-radius: 17px;
+    padding: 12px 5px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    box-shadow: 0 4px 12px #00000010;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: .2s;
+}
+
+.palette:hover:not(.revealed) {
+    transform: translateY(-5px);
+    border-color: #d8b66c;
+}
+
+.palette svg {
+    width: 100%;
+    max-width: 105px;
+    height: 80px;
+}
+
+.number {
+    font-weight: bold;
+    color: #777;
+    margin-top: 5px;
+}
+
+.group {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.revealed {
+    cursor: default;
+    background: #f3f6fa;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 25px 0;
+}
+
+.stat {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 22px;
+    text-align: center;
+    min-width: 100px;
+}
+
+.stat strong {
+    display: block;
+    font-size: 27px;
+}
+
+#message {
+    text-align: center;
+    margin: 20px 0;
+    font-weight: bold;
+    color: #28764b;
+}
+
+.info {
+    color: #777;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.hidden { display: none !important; }
+
+footer {
+    text-align: center;
+    color: #aaa;
+    padding: 20px;
+}
+
+@media(max-width: 700px) {
+    .palette-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    header h1 { font-size: 26px; }
+    .panel { padding: 20px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🎨 BilimPlay</h1>
+    <p>Оқушыларды интерактивті топқа бөлу</p>
+</header>
+
+<!-- МҰҒАЛІМ БАПТАУЫ -->
+
+<section id="settingsScreen" class="screen">
+
+    <div class="panel">
+        <h2>Сабақ параметрлері</h2>
+        <p class="info">
+            Оқушылар мен топ санын таңдаңыз.
+        </p>
+
+        <label for="studentCount">Оқушылар саны</label>
+        <input
+            type="number"
+            id="studentCount"
+            min="2"
+            max="60"
+            value="17"
+        >
+
+        <label for="groupCount">Топ саны</label>
+        <select id="groupCount">
+            <option value="2">2 топ</option>
+            <option value="3">3 топ</option>
+            <option value="4" selected>4 топ</option>
+            <option value="5">5 топ</option>
+            <option value="6">6 топ</option>
+        </select>
+
+        <button class="primary" onclick="startGame()">
+            Ойынды бастау →
+        </button>
+
+        <div id="error" class="info"></div>
+    </div>
+
+</section>
+
+<!-- ОЙЫН ЭКРАНЫ -->
+
+<section id="gameScreen" class="screen hidden">
+
+    <div class="toolbar">
+        <button class="secondary" onclick="backToSettings()">
+            ← Баптаулар
+        </button>
+
+        <button class="secondary" onclick="restart()">
+            ↻ Қайта бастау
+        </button>
+    </div>
+
+    <h2 style="text-align:center">
+        Бояу палитрасын таңда!
+    </h2>
+
+    <p style="text-align:center;color:#777">
+        Өзіңе ұнаған палитраны басып, тобыңды анықта.
+    </p>
+
+    <div id="paletteGrid" class="palette-grid"></div>
+
+    <div id="message">
+        Өз палитраңды таңда!
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+</section>
+
+<footer>BilimPlay © 2026</footer>
+
+<script>
+
+let groups = [];
+let selected = [];
+let studentTotal = 17;
+let groupTotal = 4;
+
+const colors = [
+    "#3498db",
+    "#27ae60",
+    "#e67e22",
+    "#9b59b6",
+    "#e74c3c",
+    "#16a085"
+];
+
+// КЕЗДЕЙСОҚ АРАЛАСТЫРУ
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// ТОПТАРДЫ ТЕҢ БӨЛУ
+
+function createGroups() {
+    groups = [];
+
+    const base = Math.floor(studentTotal / groupTotal);
+    const remainder = studentTotal % groupTotal;
+
+    let sizes = Array(groupTotal).fill(base);
+
+    let extraGroups = shuffle(
+        Array.from({length: groupTotal}, (_, i) => i)
+    );
+
+    for (let i = 0; i < remainder; i++) {
+        sizes[extraGroups[i]]++;
+    }
+
+    for (let g = 0; g < groupTotal; g++) {
+        for (let j = 0; j < sizes[g]; j++) {
+            groups.push(g + 1);
+        }
+    }
+
+    shuffle(groups);
+}
+
+// ОЙЫНДЫ БАСТАУ
+
+function startGame() {
+    studentTotal = Number(
+        document.getElementById("studentCount").value
+    );
+
+    groupTotal = Number(
+        document.getElementById("groupCount").value
+    );
+
+    const error = document.getElementById("error");
+
+    if (!Number.isInteger(studentTotal) ||
+        studentTotal < 2 || studentTotal > 60) {
+        error.textContent =
+            "Оқушылар саны 2 мен 60 аралығында болуы керек.";
+        return;
+    }
+
+    if (groupTotal > studentTotal) {
+        error.textContent =
+            "Топ саны оқушылар санынан көп болмауы керек.";
+        return;
+    }
+
+    error.textContent = "";
+
+    selected = [];
+    createGroups();
+
+    document.getElementById("settingsScreen")
+        .classList.add("hidden");
+
+    document.getElementById("gameScreen")
+        .classList.remove("hidden");
+
+    document.getElementById("message").textContent =
+        "Әр оқушы бір палитра таңдауы керек.";
+
+    render();
+}
+
+// ПАЛИТРА СУРЕТІ
+
+function paletteSVG() {
+    return `
+    <svg viewBox="0 0 120 100">
+      <path d="M60 5 C30 5 8 25 8 53
+      C8 80 28 95 55 95
+      L68 95 C82 95 85 80 75 70
+      C68 62 73 53 87 53
+      C105 53 113 42 109 29
+      C102 13 81 5 60 5Z"
+      fill="#e8c18b" stroke="#a97845" stroke-width="3"/>
+      <circle cx="30" cy="40" r="9" fill="#e74c3c"/>
+      <circle cx="51" cy="25" r="9" fill="#3498db"/>
+      <circle cx="76" cy="25" r="9" fill="#f1c40f"/>
+      <circle cx="92" cy="43" r="9" fill="#27ae60"/>
+      <circle cx="48" cy="63" r="9" fill="#9b59b6"/>
+    </svg>`;
+}
+
+// ЭКРАНДЫ ШЫҒАРУ
+
+function render() {
+    const grid = document.getElementById("paletteGrid");
+    grid.innerHTML = "";
+
+    for (let i = 0; i < studentTotal; i++) {
+        const card = document.createElement("div");
+        card.className = "palette";
+
+        if (selected.includes(i)) {
+            const group = groups[i];
+            card.classList.add("revealed");
+            card.style.borderColor = colors[group - 1];
+
+            card.innerHTML = `
+                <div class="group"
+                style="color:${colors[group - 1]}">
+                    ${group}-топ
+                </div>
+                <div class="number">Таңдалды ✓</div>
+            `;
+        } else {
+            card.innerHTML = `
+                ${paletteSVG()}
+                <div class="number">№ ${i + 1}</div>
+            `;
+
+            card.onclick = () => choose(i);
+        }
+
+        grid.appendChild(card);
+    }
+
+    updateStats();
+}
+
+// ОҚУШЫ ТАҢДАУЫ
+
+function choose(i) {
+    if (selected.includes(i)) return;
+
+    selected.push(i);
+
+    render();
+
+    if (selected.length === studentTotal) {
+        document.getElementById("message").textContent =
+            "🎉 Барлық оқушы топтарға бөлінді!";
+    } else {
+        document.getElementById("message").textContent =
+            `Таңдалды: ${selected.length}/${studentTotal}`;
+    }
+}
+
+// ТОПТАР САНАҒЫШЫ
+
+function updateStats() {
+    const stats = document.getElementById("stats");
+    stats.innerHTML = "";
+
+    for (let g = 1; g <= groupTotal; g++) {
+        const count = selected.filter(
+            i => groups[i] === g
+        ).length;
+
+        const total = groups.filter(
+            x => x === g
+        ).length;
+
+        stats.innerHTML += `
+            <div class="stat">
+                <strong style="color:${colors[g - 1]}">
+                    ${count}/${total}
+                </strong>
+                ${g}-топ
+            </div>
+        `;
+    }
+}
+
+// ҚАЙТА БАСТАУ
+
+function restart() {
+    selected = [];
+    createGroups();
+
+    document.getElementById("message").textContent =
+        "Жаңа топтар дайын! Палитраны таңдаңыз.";
+
+    render();
+}
+
+// БАПТАУҒА ҚАЙТУ
+
+function backToSettings() {
+    document.getElementById("gameScreen")
+        .classList.add("hidden");
+
+    document.getElementById("settingsScreen")
+        .classList.remove("hidden");
+}
+
+</script>
+
+</body>
+</html>
