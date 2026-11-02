@@ -1,0 +1,5 @@
+
+User-agent: *
+Allow: /
+
+Sitemap: https://zhiga-labs.github.io/BilimPlay/sitemap.xml
